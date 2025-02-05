@@ -8,7 +8,7 @@ export default defineConfig({
     port: 4173, // Or use process.env.PORT if required
   },
   preview: {
-    host: '0.0.0.0',
+    host: 'bk-frontend-production.up.railway.app',
     port: 4173,
   },
   plugins: [react(), tailwindcss()],
