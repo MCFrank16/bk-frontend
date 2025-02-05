@@ -55,6 +55,7 @@ const CartModal: FC<Props> = ({ isOpen, closeModal, cart }) => {
     }, [items])
 
     return (
+        // @ts-ignore
         <Modal
             isOpen={isOpen}
             onRequestClose={() => closeModal()}

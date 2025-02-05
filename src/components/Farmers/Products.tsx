@@ -25,8 +25,6 @@ const Products: FC<Props> = ({ cart }) => {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
 
-    const [openModal, setOpenModal] = useState(false);
-
     const { isLoading, isError, error, refetch } = useQuery({
         queryKey: ['all products', cart.openCart],
         queryFn: async () => {
@@ -359,11 +357,6 @@ const Products: FC<Props> = ({ cart }) => {
                     </button>
                 </div>
 
-                {
-                    openModal && <BuyModal isOpen={openModal} closeModal={() => {
-                        setOpenModal(false);
-                    }} />
-                }
             </div>
 
 

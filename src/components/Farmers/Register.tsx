@@ -85,7 +85,7 @@ const Register: FC = () => {
                 <Formik
                     initialValues={initialValues}
                     validationSchema={validationSchema}
-                    onSubmit={async (values, action) => {
+                    onSubmit={async (values) => {
                         await mutateAsync(values);
                     }}
 

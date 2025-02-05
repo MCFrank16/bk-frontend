@@ -54,6 +54,7 @@ const ProfileModal: FC<Props> = ({ isOpen, closeModal }) => {
     })
 
     return (
+        // @ts-ignore
         <Modal
             isOpen={isOpen}
             onRequestClose={() => closeModal()}
@@ -133,7 +134,7 @@ const ProfileModal: FC<Props> = ({ isOpen, closeModal }) => {
                                             as='select'
                                             name="land.type"
                                             className="bg-gray-100 p-2 rounded outline-none"
-                
+
                                         >
                                             <option value=''>Select land type</option>
                                             <option value='wet'>Wet land</option>

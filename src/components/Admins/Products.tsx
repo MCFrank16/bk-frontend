@@ -1,6 +1,4 @@
 import { FC, useState } from 'react'
-import useAuth from '../../hooks/useAuth';
-import { useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 
 import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, flexRender, ColumnDef, SortingState } from '@tanstack/react-table';
@@ -10,11 +8,6 @@ import NewProduct from './modals/NewProduct';
 
 
 const Products: FC = () => {
-
-    const { user: { user } } = useAuth();
-
-    const location = useLocation();
-    const navigate = useNavigate();
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");

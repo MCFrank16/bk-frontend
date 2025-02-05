@@ -1,5 +1,6 @@
-import { FC, useState } from 'react'
-import Modal from 'react-modal';
+import { FC, useEffect, useState } from 'react'
+import ReactModal from 'react-modal';
+
 
 import { XIcon } from 'lucide-react';
 
@@ -44,9 +45,14 @@ const StatusModal: FC<Props> = ({ isOpen, closeModal, editItem, title }) => {
         }
     })
 
+    useEffect(() => {
+        ReactModal.setAppElement('#root'); // Set the app element for accessibility
+    }, []);
+
 
     return (
-        <Modal
+        // @ts-ignore
+        <ReactModal
             isOpen={isOpen}
             onRequestClose={() => {
                 setError({
@@ -58,6 +64,7 @@ const StatusModal: FC<Props> = ({ isOpen, closeModal, editItem, title }) => {
             className={`modal w-1/3 h-auto rounded text-gray-600 outline-none`}
             overlayClassName="overlay"
             contentLabel="Modal"
+
         >
             <div className='flex flex-col p-2 rounded h-full'>
                 <div className='flex justify-between items-center mb-2'>
@@ -119,7 +126,7 @@ const StatusModal: FC<Props> = ({ isOpen, closeModal, editItem, title }) => {
 
             </div>
 
-        </Modal >
+        </ReactModal >
     )
 }
 

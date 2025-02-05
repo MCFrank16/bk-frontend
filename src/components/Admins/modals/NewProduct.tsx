@@ -7,8 +7,7 @@ import { Form, Formik, Field, ErrorMessage } from 'formik';
 import * as Yup from 'yup';
 
 import { useMutation } from '@tanstack/react-query';
-import useAuth from '../../../hooks/useAuth';
-import { UpdateProduct, CreateProduct, DeleteProduct } from '../../../backend/api';
+import { UpdateProduct, CreateProduct } from '../../../backend/api';
 
 interface Props {
     isOpen: boolean;
@@ -60,6 +59,7 @@ const NewProduct: FC<Props> = ({ isOpen, closeModal, editItem }) => {
 
 
     return (
+        // @ts-ignore
         <Modal
             isOpen={isOpen}
             onRequestClose={() => closeModal()}
