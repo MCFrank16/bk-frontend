@@ -1,24 +1,57 @@
-import { useState } from 'react'
+import { FC, useState } from 'react'
+import useAuth from '../../hooks/useAuth';
+import { useLocation, useNavigate } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 
-import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, flexRender } from '@tanstack/react-table';
+import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, flexRender, ColumnDef, SortingState } from '@tanstack/react-table';
 import { User, TypeIcon, ActivityIcon, Search, ArrowUpDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
+import { getAllProducts } from '../../backend/api';
+import NewProduct from './modals/NewProduct';
 
 
-import mockData from '../../backend/products.json';
+const Products: FC = () => {
 
-const MyProducts = () => {
-    const [data] = useState(() => [...mockData]);
-    const [sorting, setSorting] = useState([]);
+    const { user: { user } } = useAuth();
+
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
 
-    const handleBuy = (id: any) => {
-        console.log(`the id ${id}`);
-    }
+    const [openModal, setOpenModal] = useState(false);
+    const [editItem, setEditItem] = useState<any | null>(null);
 
-    const columnHelper = createColumnHelper();
+    const { isLoading, isError, error, refetch, data } = useQuery({
+        queryKey: ['all products', openModal == false],
+        queryFn: async () => {
+            return await getAllProducts(``);
+        },
+        select: (data: any) => {
+            let newData = data.data.data.map((item: any, index: number) => {
+                return {
+                    itemId: item._id,
+                    id: index + 1,
+                    name: item.name,
+                    type: item.type,
+                    status: item.status,
+                    stock: item.stock,
+                    price: `${item.price}`,
+                    landType: item.landDetails.type,
+                    landAmount: item.landDetails.quantity
+                }
+            });
 
 
-    const columns = [
+            return newData;
+        },
+        retry: false
+    });
+
+
+    const columnHelper = createColumnHelper<any>();
+
+    const columns: ColumnDef<any, any>[] = [
         columnHelper.accessor("id", {
             cell: (info) => info.getValue(),
             header: () => (
@@ -28,20 +61,56 @@ const MyProducts = () => {
             ),
         }),
 
-        columnHelper.accessor("item", {
+        columnHelper.accessor("name", {
             cell: (info) => info.getValue(),
             header: () => (
                 <span className="flex items-center">
-                    <User className="mr-2" size={16} /> Item
+                    <User className="mr-2" size={16} /> Name
                 </span>
             ),
         }),
-        columnHelper.accessor("status", {
-            id: "status",
+        columnHelper.accessor("type", {
+            id: "type",
             cell: (info) => info.getValue(),
             header: () => (
                 <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Status
+                    <TypeIcon className="mr-2" size={16} /> Type
+                </span>
+            ),
+        }),
+        columnHelper.accessor("price", {
+            id: "price",
+            cell: (info) => `${info.getValue()} RWF`,
+            header: () => (
+                <span className="flex items-center">
+                    <TypeIcon className="mr-2" size={16} /> Price
+                </span>
+            ),
+        }),
+        columnHelper.accessor("stock", {
+            id: "stock",
+            cell: (info) => `${info.getValue()} KGs`,
+            header: () => (
+                <span className="flex items-center">
+                    <TypeIcon className="mr-2" size={16} /> Stock
+                </span>
+            ),
+        }),
+        columnHelper.accessor("landType", {
+            id: "landType",
+            cell: (info) => info.getValue(),
+            header: () => (
+                <span className="flex items-center">
+                    <TypeIcon className="mr-2" size={16} /> Land type
+                </span>
+            ),
+        }),
+        columnHelper.accessor("landAmount", {
+            id: "landAmount",
+            cell: (info) => info.getValue(),
+            header: () => (
+                <span className="flex items-center">
+                    <TypeIcon className="mr-2" size={16} /> Land amount
                 </span>
             ),
         }),
@@ -54,33 +123,29 @@ const MyProducts = () => {
             cell: (info) => (
                 <div className='flex space-x-3'>
                     <button
-                        className="secondary-bg-color text-white px-8 py-2 rounded cursor-pointer"
-                        onClick={() => handleBuy(info.row.original)}
-                    >
-                        View
-                    </button>
-
-                    <button
                         className="bg-blue-500 text-white px-8 py-2 rounded cursor-pointer"
-                        onClick={() => handleBuy(info.row.original)}
+                        onClick={() => {
+                            setOpenModal(true);
+                            setEditItem(info.row.original);
+                        }}
                     >
                         Edit
                     </button>
 
                     <button
                         className="bg-red-500 text-white px-8 py-2 rounded cursor-pointer"
-                        onClick={() => handleBuy(info.row.original)}
+                        // onClick={() => handleBuy(info.row.original)}
                     >
                         Delete
                     </button>
                 </div>
-
             ),
         }),
     ];
 
+
     const table = useReactTable({
-        data,
+        data: data,
         columns,
         state: {
             sorting,
@@ -99,10 +164,46 @@ const MyProducts = () => {
         onGlobalFilterChange: setGlobalFilter,
         getFilteredRowModel: getFilteredRowModel(),
     });
+    
+    if (isLoading) {
+        return (
+            <div className='flex justify-center items-center h-screen'>
+                <span>loading...</span>
+            </div>
+        )
+
+    }
+
+    if (isError && error) {
+        return (
+            <div className='flex justify-center items-center h-screen'>
+                <div className='flex flex-col'>
+                    <span className='text-lg mb-3'>Something went wrong...</span>
+
+                    <div className='w-full flex justify-center items-center'>
+                        <button
+                            type='button'
+                            className='secondary-bg-color w-1/2 px-8 py-2 rounded text-white'
+                            onClick={() => refetch()}
+                        >
+                            Retry
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
 
     return (
         <div className='w-full'>
+
+            <div className='flex justify-end items-center mb-4'>
+                <button type='button' className='secondary-bg-color text-white px-8 py-2 rounded cursor-pointer' onClick={() => { setOpenModal(true) }}>
+                    New Product
+                </button>
+            </div>
+
             <div className="mb-4 relative">
                 <input
                     value={globalFilter ?? ""}
@@ -228,10 +329,17 @@ const MyProducts = () => {
                         <ChevronsRight size={20} />
                     </button>
                 </div>
-            </div>
-        </div>
 
+                {
+                    openModal && <NewProduct isOpen={openModal} editItem={editItem} closeModal={() => {
+                        setEditItem(null)
+                        setOpenModal(false);
+                    }} />
+                }
+            </div>
+
+        </div>
     )
 }
 
-export default MyProducts
+export default Products

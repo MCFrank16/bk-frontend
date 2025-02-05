@@ -1,16 +1,20 @@
-import { FC, useEffect, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import { CircleUser, ChevronDown, ChevronUp } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import useAuth from '../hooks/useAuth';
+import ProfileModal from './Farmers/modals/ProfileModal';
 
-type props = {
-  user: any,
+interface Props {
+  showProfile?: boolean;
 }
 
-const Navbar: FC<props> = ({ user }) => {
+const Navbar: FC<Props> = ({ showProfile }) => {
 
   const navigate = useNavigate();
 
+  const { user: { user, setUser } } = useAuth();
 
+  const [openProfile, setOpenProfile] = useState(false);
 
   const [drop, setDrop] = useState(true);
 
@@ -19,25 +23,21 @@ const Navbar: FC<props> = ({ user }) => {
   };
 
   useEffect(() => {
-    // setUser({
-    //   name: "Frank Mutabazi",
-    //   email: "mecfrank@yahoo.fr",
-    //   phone: "+2500788715109",
-    //   land: {
-    //     size: 1,
-    //     measurements: 'acres',
-    //     location: "Kicukiro"
-    //   }
-    // })
-  })
+    if (showProfile) {
+      setOpenProfile(true)
+    }
+  }, [showProfile])
+
 
   return (
-    <header className='main-bg-color flex justify-between items-center px-4 py-2'>
-      <span className='text-xl Lato cursor-pointer' onClick={() => navigate("/")}>
+    <header className='main-bg-color flex items-center px-4 py-2'>
+      <span className='text-xl Lato cursor-pointer' onClick={() => {
+        if (user?.type != 'admin') navigate("/")
+      }}>
         Agro-farm
       </span>
 
-      <div className='flex space-x-4'>
+      <div className='flex-grow flex justify-end items-center space-x-4'>
 
         {user && <div
           className=" flex cursor-pointer items-center font-medium relative space-x-4"
@@ -55,14 +55,26 @@ const Navbar: FC<props> = ({ user }) => {
           >
 
 
-            <span
+            {user?.type != 'admin' && <span
               className="block px-4 py-2 text-gray-600 cursor-pointer hover:bg-gray-400 hover:text-white"
               onClick={() => {
-                console.log("ndaje");
+                setOpenProfile(true);
               }
               }
             >
               My account
+            </span>}
+
+            <span
+              className="block px-4 py-2 text-gray-600 cursor-pointer hover:bg-gray-400 hover:text-white"
+              onClick={() => {
+                setUser(null);
+                localStorage.removeItem('user');
+                navigate('/');
+              }
+              }
+            >
+              Logout
             </span>
 
           </div>
@@ -72,23 +84,38 @@ const Navbar: FC<props> = ({ user }) => {
           className=" flex justify-between cursor-pointer items-center space-x-3"
           onClick={() => handleDrop()}
         >
+          
 
           <button
             className="secondary-bg-color text-white px-8 py-2 rounded cursor-pointer"
             onClick={() => navigate("/signin")}
             >
-            Sign in
+             login
           </button>
 
           <button
-            className="border border-gray-600 text-gray-600 px-8 py-2 rounded cursor-pointer"
+            className="border border-gray-600 text-black px-8 py-2 rounded cursor-pointer"
             onClick={() => navigate("/signup")}
-          >
-            Sign up
+            >
+            signup
+          </button>
+
+
+          <button
+            className="border border-gray-600 text-black px-8 py-2 rounded cursor-pointer"
+            onClick={() => navigate("/admin/login")}
+            >
+            admin
           </button>
 
 
         </div>}
+
+        {
+          openProfile && <ProfileModal isOpen={openProfile} closeModal={() => {
+            setOpenProfile(false);
+          }} />
+        }
 
 
 

@@ -1,57 +1,40 @@
+import { useState } from 'react'
+
 import { createColumnHelper, useReactTable, getCoreRowModel, getSortedRowModel, getFilteredRowModel, flexRender, ColumnDef, SortingState } from '@tanstack/react-table';
-import { User, TypeIcon, ActivityIcon, Search, ArrowUpDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
-import { useState, FC, useEffect } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router';
+import { User, TypeIcon, Search, ArrowUpDown, ChevronsLeft, ChevronLeft, ChevronRight, ChevronsRight } from 'lucide-react';
 
-
-import { getAllProducts } from '../../backend/api';
 import { useQuery } from '@tanstack/react-query';
+import { getAllOrders } from '../../backend/api';
 import useAuth from '../../hooks/useAuth';
-import { Formik } from 'formik';
 
-interface Props {  
-    cart: any;
-}
-const Products: FC<Props> = ({ cart }) => {
+const MyProducts = () => {
 
     const { user: { user } } = useAuth();
-
-    const location = useLocation();
-    const navigate = useNavigate();
-
-    const [data, setData] = useState([]);
-    const [redirect, setRedirect] = useState(false);
 
     const [sorting, setSorting] = useState<SortingState>([]);
     const [globalFilter, setGlobalFilter] = useState("");
 
-    const [openModal, setOpenModal] = useState(false);
 
-    const { isLoading, isError, error, refetch } = useQuery({
-        queryKey: ['all products', cart.openCart],
+    const { isLoading, isError, error, refetch, data } = useQuery({
+        queryKey: ['farmer order'],
         queryFn: async () => {
-            const data = await getAllProducts(``);
+            return await getAllOrders(user?._id);
+        },
+        select: (data: any) => {
             let newData = data.data.data.map((item: any, index: number) => {
                 return {
-                    itemId: item?._id,
                     id: index + 1,
-                    name: item.name,
-                    type: item.type,
+                    name: item.product?.name,
+                    quantity: item.quantity,
+                    paid: item?.quantity * item?.product?.price,
                     status: item.status,
-                    stock: item.stock,
-                    price: item.price,
-                    landType: item.landDetails.type,
-                    landAmount: item.landDetails.quantity
+                    stock: item.stock
                 }
             });
-
-            setData(newData);
-            return data;
+            return newData;
         },
-        retry: false,
-        enabled: cart.openCart == false
+        retry: false
     });
-
 
     const columnHelper = createColumnHelper<any>();
 
@@ -64,113 +47,68 @@ const Products: FC<Props> = ({ cart }) => {
                 </span>
             ),
         }),
-
         columnHelper.accessor("name", {
             cell: (info) => info.getValue(),
             header: () => (
                 <span className="flex items-center">
-                    <User className="mr-2" size={16} /> Name
+                    <User className="mr-2" size={16} /> Item
                 </span>
             ),
         }),
-        columnHelper.accessor("type", {
-            id: "type",
+        columnHelper.accessor("quantity", {
             cell: (info) => info.getValue(),
             header: () => (
                 <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Type
+                    <User className="mr-2" size={16} /> Quantity
                 </span>
             ),
         }),
-        columnHelper.accessor("stock", {
-            id: "stock",
-            cell: (info) => `${info.getValue()} KGs`,
-            header: () => (
-                <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Stock
-                </span>
-            ),
-        }),
-        columnHelper.accessor("price", {
-            id: "price",
+        columnHelper.accessor("paid", {
             cell: (info) => `${info.getValue()} RWF`,
             header: () => (
                 <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Price per kg
+                    <User className="mr-2" size={16} /> Quantity
                 </span>
             ),
         }),
-        columnHelper.accessor("landType", {
-            id: "landType",
+        columnHelper.accessor("status", {
+            id: "status",
             cell: (info) => info.getValue(),
             header: () => (
                 <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Land type
+                    <TypeIcon className="mr-2" size={16} /> Status
                 </span>
             ),
         }),
-        columnHelper.accessor("landAmount", {
-            id: "landAmount",
-            cell: (info) => `${info.getValue()} KGs`,
-            header: () => (
-                <span className="flex items-center">
-                    <TypeIcon className="mr-2" size={16} /> Land amount
-                </span>
-            ),
-        }),
-        columnHelper.accessor("Action", {
-            header: () => (
-                <span className="flex items-center">
-                    <ActivityIcon className="mr-2" size={16} /> Action
-                </span>
-            ),
-            cell: (info) => (
-            <div>
-                <Formik
-                    initialValues={{ amount: 1 * user?.land?.size }}
-                    onSubmit={(values) => {
-                        if (user == null) {
-                            navigate('/signin', {
-                                state: { from: location }
-                            });
-                        } else {
-                            const totalToPay = values.amount * info.row.original.price;
-                            const productWithAmount = { ...info.row.original, amount: values.amount, total: totalToPay };
-                            cart.setCart([...cart.cart, productWithAmount]);
-                            const updatedData = data.filter((item: any) => item.id !== info.row.original.id);
-                            setData(updatedData);
-                        }
-                    }}
-                >
-                    {({ values, handleChange, handleSubmit }) => (
-                        <form onSubmit={handleSubmit} className="flex items-center space-x-2">
-                            <input
-                                type="number"
-                                name="amount"
-                                disabled
-                                value={values.amount}
-                                onChange={handleChange}
-                                min="1"
-                                className="w-16 p-2 border border-gray-300 rounded-md"
-                            />
-                            <button
-                                type="submit"
-                                disabled={user && user?.land == null}
-                                className="secondary-bg-color text-white px-4 py-2 rounded cursor-pointer"
-                            >
-                                Add to cart
-                            </button>
-                        </form>
-                    )}
-                </Formik>
-            </div>
-            ),
-        }),
+        // columnHelper.accessor("Action", {
+        //     header: () => (
+        //         <span className="flex items-center">
+        //             <ActivityIcon className="mr-2" size={16} /> Action
+        //         </span>
+        //     ),
+        //     cell: (info) => {
+
+        //         const status: string = info.row.original?.status;
+
+        //         return (
+        //             <div className='flex space-x-3'>
+
+        //                 <button
+        //                     className="bg-red-500 text-white px-8 py-2 rounded cursor-pointer"
+        //                 // onClick={() => handleBuy(info.row.original)}
+        //                 >
+        //                     Delete
+        //                 </button>
+        //             </div>
+
+        //         )
+        //     }
+
+        // }),
     ];
 
-
     const table = useReactTable({
-        data: data,
+        data,
         columns,
         state: {
             sorting,
@@ -189,16 +127,6 @@ const Products: FC<Props> = ({ cart }) => {
         onGlobalFilterChange: setGlobalFilter,
         getFilteredRowModel: getFilteredRowModel(),
     });
-
-    useEffect(() => {
-        if ((user && user?.type === 'admin')) {
-          setRedirect(true);
-        }
-      }, [user])
-    
-      if (redirect) {
-        return <Navigate to="/admin" state={{ from: location }} replace />;
-      }
 
     if (isLoading) {
         return (
@@ -232,7 +160,6 @@ const Products: FC<Props> = ({ cart }) => {
 
     return (
         <div className='w-full'>
-
             <div className="mb-4 relative">
                 <input
                     value={globalFilter ?? ""}
@@ -358,17 +285,10 @@ const Products: FC<Props> = ({ cart }) => {
                         <ChevronsRight size={20} />
                     </button>
                 </div>
-
-                {
-                    openModal && <BuyModal isOpen={openModal} closeModal={() => {
-                        setOpenModal(false);
-                    }} />
-                }
             </div>
-
-
         </div>
+
     )
 }
 
-export default Products
+export default MyProducts
